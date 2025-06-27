@@ -19,5 +19,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Show environment variable (debug)
+        run: |
+          if [ -z "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" ]; then
+            echo "❌ Secret not available in this workflow"
+            exit 1
+          else
+            echo "✅ Secret is loaded in GitHub"
+          fi
+
       - name: Run seat upload script
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          SEATSIO_API_KEY: ${{ secrets.SEATSIO_API_KEY }}
         run: python main.py
