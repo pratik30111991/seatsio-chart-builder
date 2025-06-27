@@ -1,18 +1,27 @@
 import gspread
 import csv
+import json
+import os
 from oauth2client.service_account import ServiceAccountCredentials
 
-# === Setup your Google Service Account Credentials ===
+# === Load JSON from GitHub Secret (in environment variable) ===
+google_creds = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+
+if not google_creds:
+    raise Exception("❌ Missing GOOGLE_CREDENTIALS_JSON secret.")
+
+# Authorize with Google Sheets API
+creds_dict = json.loads(google_creds)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("google_credentials.json", scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-# === Open your sheet ===
+# === Open the Google Sheet ===
 spreadsheet_id = "1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ"
 sheet = client.open_by_key(spreadsheet_id).sheet1
 data = sheet.get_all_records()
 
-# === Process data and create CSV ===
+# === Write to Seats.io-compatible CSV ===
 with open("seatsio_ready.csv", mode="w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
     writer.writerow(["seatLabel", "row", "column", "x", "y", "category"])
@@ -26,7 +35,7 @@ with open("seatsio_ready.csv", mode="w", newline="", encoding="utf-8") as file:
         y = row["Y"]
         category = row["Category"]
 
-        # Count seat number in each row
+        # Auto-generate seat number (column) for each row
         if row_label not in row_seat_counter:
             row_seat_counter[row_label] = 1
         else:
@@ -35,4 +44,4 @@ with open("seatsio_ready.csv", mode="w", newline="", encoding="utf-8") as file:
 
         writer.writerow([seat_label, row_label, seat_number, x, y, category])
 
-print("✅ seatsio_ready.csv created.")
+print("✅ Done: seatsio_ready.csv generated successfully.")
