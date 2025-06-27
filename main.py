@@ -15,7 +15,7 @@ seatsio_api_key = os.environ.get("SEATSIO_API_KEY")
 if not seatsio_api_key:
     raise Exception("❌ SEATSIO_API_KEY secret not set.")
 
-# === Define chart key where seats should be created ===
+# === Define your Seats.io chart key ===
 chart_key = "49e1934d-4a13-e089-8344-8d01ace4e8db"
 
 # === Google Sheets Setup ===
@@ -35,8 +35,7 @@ headers = {
 }
 
 for row in data:
-    seat_label = row["Seat"]
-    row_label = row["Label"]
+    seat_label = row["Seat Label"]  # 👈 using your exact column
     x = row["X"]
     y = row["Y"]
     category = row["Category"]
