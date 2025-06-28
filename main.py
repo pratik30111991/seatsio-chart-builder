@@ -25,8 +25,8 @@ client = gspread.authorize(creds)
 sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 data = sheet.get_all_records()
 
-# ✅ Correct new Seats.io designer API
-drawing_url = f"{SEATSIO_BASE_URL}/designer/charts/{CHART_KEY}/seats"
+# ✅ FINAL WORKING ENDPOINT
+drawing_url = f"{SEATSIO_BASE_URL}/system/public/charts/{CHART_KEY}/version/draft/seats"
 
 print("🪚 Uploading seats to chart...")
 
