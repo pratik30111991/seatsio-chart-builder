@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  upload:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run main script
+      - name: Run script
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
           SEATSIO_API_KEY: ${{ secrets.SEATSIO_API_KEY }}
