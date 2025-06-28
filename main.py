@@ -18,6 +18,7 @@ if not SEATSIO_API_KEY:
 if not GOOGLE_CREDENTIALS_JSON:
     raise Exception("❌ GOOGLE_CREDENTIALS_JSON secret not set.")
 
+# ✅ Authorize Google Sheets
 creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -25,8 +26,8 @@ client = gspread.authorize(creds)
 sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 data = sheet.get_all_records()
 
-# ✅ FINAL WORKING ENDPOINT
-drawing_url = f"{SEATSIO_BASE_URL}/system/public/charts/{CHART_KEY}/version/draft/seats"
+# ✅ FINAL CORRECT ENDPOINT
+seats_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/seats"
 
 print("🪚 Uploading seats to chart...")
 
@@ -41,22 +42,21 @@ for row in data:
             "label": label,
             "x": x,
             "y": y,
-            "category": category,
-            "leftNeighbour": None,
-            "rightNeighbour": None,
-            "accessible": False
+            "category": category
         }
 
         res = requests.post(
-            drawing_url,
+            seats_url,
             json=seat_data,
             auth=(SEATSIO_API_KEY, "")
         )
 
         if res.status_code != 200:
             print(f"❌ Failed to create seat {label}: {res.status_code} - {res.text}")
+        else:
+            print(f"✅ Created seat: {label}")
 
     except Exception as e:
         print(f"❌ Error processing row: {e}")
 
-print("✅ All seats uploaded successfully.")
+print("✅ All seats uploaded.")
