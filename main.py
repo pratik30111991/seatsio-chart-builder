@@ -25,7 +25,8 @@ client = gspread.authorize(creds)
 sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 data = sheet.get_all_records()
 
-drawing_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/drawing/seats"
+# ✅ Correct new Seats.io designer API
+drawing_url = f"{SEATSIO_BASE_URL}/designer/charts/{CHART_KEY}/seats"
 
 print("🪚 Uploading seats to chart...")
 
@@ -34,7 +35,7 @@ for row in data:
         label = str(row.get("Seat Label")).strip()
         x = float(row.get("X"))
         y = float(row.get("Y"))
-        category = str(row.get("Category")).strip()  # <--- Fix here
+        category = str(row.get("Category")).strip()
 
         seat_data = {
             "label": label,
@@ -57,6 +58,5 @@ for row in data:
 
     except Exception as e:
         print(f"❌ Error processing row: {e}")
-
 
 print("✅ All seats uploaded successfully.")
