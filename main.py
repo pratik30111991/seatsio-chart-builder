@@ -34,7 +34,7 @@ for row in data:
         label = str(row.get("Seat Label")).strip()
         x = float(row.get("X"))
         y = float(row.get("Y"))
-        category = int(row.get("Category"))
+        category = str(row.get("Category")).strip()  # <--- Fix here
 
         seat_data = {
             "label": label,
@@ -57,5 +57,6 @@ for row in data:
 
     except Exception as e:
         print(f"❌ Error processing row: {e}")
+
 
 print("✅ All seats uploaded successfully.")
