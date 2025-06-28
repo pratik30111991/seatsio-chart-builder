@@ -30,7 +30,7 @@ sheet = client.open_by_key(spreadsheet_id).worksheet("Grand Theatre Seating Plan
 data = sheet.get_all_records()
 
 # === Seats.io Setup ===
-base_url = "https://api-na.seats.io"
+base_url = "https://api.us.seats.io"
 headers = {
     "Content-Type": "application/json",
     "Authorization": f"Secret {seatsio_api_key}"
