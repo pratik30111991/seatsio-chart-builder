@@ -26,8 +26,16 @@ client = gspread.authorize(creds)
 sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 data = sheet.get_all_records()
 
-# ✅ FINAL CORRECT endpoint
-seats_url = f"{SEATSIO_BASE_URL}/system/public/charts/{CHART_KEY}/version/draft/actions/add-seats"
+# ✅ Create draft (required before modifying seats)
+draft_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/version/draft"
+res = requests.post(draft_url, auth=(SEATSIO_API_KEY, ""))
+if res.status_code not in [200, 201]:
+    raise Exception(f"❌ Error creating draft: {res.text}")
+else:
+    print("🧹 Draft version created.")
+
+# ✅ Final correct endpoint for private key
+seats_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/version/draft/actions/add-seats"
 
 print("🪚 Uploading seats to chart...")
 
@@ -47,18 +55,14 @@ for row in data:
             }]
         }
 
-        res = requests.post(
-            seats_url,
-            json=seat_payload,
-            auth=(SEATSIO_API_KEY, "")
-        )
+        res = requests.post(seats_url, json=seat_payload, auth=(SEATSIO_API_KEY, ""))
 
         if res.status_code != 200:
             print(f"❌ Failed to create seat {label}: {res.status_code} - {res.text}")
         else:
-            print(f"✅ Seat {label} added.")
+            print(f"✅ Seat {label} created.")
 
     except Exception as e:
         print(f"❌ Error in row: {e}")
 
-print("✅ Done uploading all seats.")
+print("✅ All seats uploaded.")
