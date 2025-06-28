@@ -26,16 +26,8 @@ client = gspread.authorize(creds)
 sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 data = sheet.get_all_records()
 
-# ✅ Create draft (required before modifying seats)
-draft_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/version/draft"
-res = requests.post(draft_url, auth=(SEATSIO_API_KEY, ""))
-if res.status_code not in [200, 201]:
-    raise Exception(f"❌ Error creating draft: {res.text}")
-else:
-    print("🧹 Draft version created.")
-
-# ✅ Final correct endpoint for private key
-seats_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/version/draft/actions/add-seats"
+# ✅ Upload seats directly (no draft creation needed)
+seats_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/seats"
 
 print("🪚 Uploading seats to chart...")
 
