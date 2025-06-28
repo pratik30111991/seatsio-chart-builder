@@ -1,77 +1,71 @@
 import os
 import json
-import time
 import requests
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# ========================
-# 🔧 CONFIG
-# ========================
-chart_key = "e38f6670-8b39-46b7-b22d-7de6187d0cde"
-seatsio_api_key = os.environ.get("SEATSIO_API_KEY")
-google_creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+# ========== CONFIG ==========
+SEATSIO_API_KEY = os.environ.get("SEATSIO_API_KEY")
+GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+CHART_KEY = "e38f6670-8b39-46b7-b22d-7de6187d0cde"
+SHEET_ID = "1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ"
+SHEET_NAME = "Sheet1"
+SEATSIO_BASE_URL = "https://api.seats.io"  # Fixed to global endpoint
+# ==============================
 
-domain = "api.us.seats.io"
-base_url = f"https://{domain}"
-headers = {
-    "Authorization": f"{seatsio_api_key}",
-    "Content-Type": "application/json"
-}
+if not SEATSIO_API_KEY:
+    raise Exception("❌ SEATSIO_API_KEY secret not set.")
+if not GOOGLE_CREDENTIALS_JSON:
+    raise Exception("❌ GOOGLE_CREDENTIALS_JSON secret not set.")
 
-# ========================
-# 📄 Authorize Google Sheets
-# ========================
-creds_dict = json.loads(google_creds_json)
+creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
+
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-gc = gspread.authorize(creds)
-sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").sheet1
-rows = sheet.get_all_records()
+client = gspread.authorize(creds)
+sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+data = sheet.get_all_records()
 
-# ========================
-# 🧹 Clear chart
-# ========================
 print("🧹 Clearing chart before adding new seats...")
-try:
-    r = requests.post(f"{base_url}/charts/{chart_key}/version/draft", headers=headers)
-    if r.status_code != 201:
-        raise Exception(f"❌ Failed to create draft version: {r.status_code} - {r.text}")
-except Exception as e:
-    print(f"❌ Error creating draft: {e}")
-    exit(1)
 
-# ========================
-# 🪚 Upload seats
-# ========================
+# Create draft version of chart
+draft_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/version/draft"
+draft_res = requests.post(draft_url, auth=(SEATSIO_API_KEY, ""))
+if draft_res.status_code != 200:
+    raise Exception(f"❌ Error creating draft: {draft_res.text}")
+
+drawing_url = f"{SEATSIO_BASE_URL}/charts/{CHART_KEY}/drawing/seats"
+
 print("🪚 Uploading seats to chart...")
-for i, row in enumerate(rows):
-    label = row.get("Label") or row.get("Seat") or f"Seat{i+1}"
-    x = float(row.get("X", 0))
-    y = float(row.get("Y", 0))
-    category = row.get("Category", "1")
 
-    seat_data = {
-        "label": label,
-        "left": x,
-        "top": y,
-        "category": category
-    }
+for row in data:
+    try:
+        seat = row.get("Seat")
+        label = row.get("Label")
+        x = float(row.get("X"))
+        y = float(row.get("Y"))
+        category = int(row.get("Category"))
 
-    for attempt in range(3):
-        try:
-            res = requests.post(
-                f"{base_url}/charts/{chart_key}/drawing/seats",
-                headers=headers,
-                json=seat_data
-            )
-            res.raise_for_status()
-            print(f"✅ Created seat {label}")
-            break
-        except Exception as e:
-            print(f"❌ Failed to create seat {label} (Attempt {attempt+1}/3): {e}")
-            time.sleep(5)
-    else:
-        print(f"⛔ Skipped seat {label} after 3 retries.")
+        seat_data = {
+            "label": label,
+            "x": x,
+            "y": y,
+            "category": category,
+            "leftNeighbour": None,
+            "rightNeighbour": None,
+            "accessible": False
+        }
 
-print("🎉 All done.")
+        res = requests.post(
+            drawing_url,
+            json=seat_data,
+            auth=(SEATSIO_API_KEY, "")
+        )
+
+        if res.status_code != 200:
+            print(f"❌ Failed to create seat {seat}: {res.status_code} - {res.text}")
+
+    except Exception as e:
+        print(f"❌ Error processing seat {row.get('Seat')}: {e}")
+
+print("✅ Done uploading all seats.")
