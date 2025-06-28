@@ -16,16 +16,11 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Create Google creds file from secret
-        run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > google_creds.json
-
-      - name: Set environment vars
-        run: |
-          echo "GOOGLE_CREDENTIALS_FILE=google_creds.json" >> $GITHUB_ENV
-          echo "SEATSIO_API_KEY=${{ secrets.SEATSIO_API_KEY }}" >> $GITHUB_ENV
-
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run upload script
+      - name: Run main script
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          SEATSIO_API_KEY: ${{ secrets.SEATSIO_API_KEY }}
         run: python main.py
