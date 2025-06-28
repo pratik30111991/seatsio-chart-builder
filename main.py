@@ -15,50 +15,59 @@ seatsio_api_key = os.environ.get("SEATSIO_API_KEY")
 if not seatsio_api_key:
     raise Exception("❌ SEATSIO_API_KEY secret not set.")
 
-# === Your chart key ===
-chart_key = "49e1934d-4a13-e089-8344-8d01ace4e8db"
-base_url = "https://api.seats.io"
+# === Chart Key (YOUR CHART) ===
+chart_key = "abc12345-xxxx-yyyy"  # 🔁 Use your chart key here
 
-# === Step 1: Create a new draft version (overwrite previous draft)
-create_draft_url = f"{base_url}/charts/{chart_key}/version/draft"
-r = requests.post(create_draft_url, auth=(seatsio_api_key, ""))
-if r.status_code not in [200, 201]:
-    raise Exception(f"❌ Failed to create draft version: {r.status_code} - {r.text}")
-print("✅ Draft version created successfully.")
-
-# === Step 2: Google Sheets setup ===
+# === Google Sheets Setup ===
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-sheet = client.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").sheet1
-rows = sheet.get_all_records()
+# === Open your sheet ===
+spreadsheet_id = "1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ"
+sheet = client.open_by_key(spreadsheet_id).sheet1
+data = sheet.get_all_records()
 
-# === Step 3: Prepare drawing objects
-objects = []
-for row in rows:
-    objects.append({
-        "type": "seat",
-        "label": row["Seat Label"],
-        "x": float(row["X"]),
-        "y": float(row["Y"]),
-        "category": row["Category"]
-    })
-
-drawing_payload = {
-    "objects": objects
+# === Seats.io Setup ===
+base_url = "https://api.seats.io"
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Secret {seatsio_api_key}"
 }
 
-# === Step 4: Upload drawing to draft chart
-upload_url = f"{base_url}/charts/{chart_key}/version/draft/drawing"
-res = requests.put(
-    upload_url,
-    auth=(seatsio_api_key, ""),
-    headers={"Content-Type": "application/json"},
-    json=drawing_payload
-)
+# === Create draft version to edit ===
+r = requests.post(f"{base_url}/charts/{chart_key}/version/draft", headers=headers)
+if r.status_code != 200:
+    raise Exception(f"❌ Failed to create draft version: {r.status_code} - {r.text}")
 
-if res.status_code == 200:
-    print("✅ Seat layout uploaded successfully to draft.")
+# === Upload each seat ===
+for row in data:
+    label = row["Seat Label"]
+    x = float(row["X"])
+    y = float(row["Y"])
+    category = row["Category"]
+
+    payload = {
+        "label": label,
+        "x": x,
+        "y": y,
+        "category": category
+    }
+
+    res = requests.post(
+        f"{base_url}/charts/{chart_key}/version/draft/seats",
+        headers=headers,
+        json=payload
+    )
+
+    if res.status_code == 201:
+        print(f"✅ Seat {label} created.")
+    else:
+        print(f"❌ Failed to create seat {label}: {res.status_code} - {res.text}")
+
+# === Publish the draft ===
+res = requests.post(f"{base_url}/charts/{chart_key}/version/publish", headers=headers)
+if res.status_code == 204:
+    print("✅ Chart published successfully.")
 else:
-    print(f"❌ Failed to upload drawing: {res.status_code} - {res.text}")
+    print(f"❌ Failed to publish chart: {res.status_code} - {res.text}")
