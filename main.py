@@ -1,49 +1,44 @@
-# ✅ main.py (final working version)
-
-import gspread
-import json
 import os
+import json
+import gspread
 import requests
 from oauth2client.service_account import ServiceAccountCredentials
 
-# === Load Google Credentials from GitHub Secret ===
+# === Load Google Credentials ===
 google_creds = os.environ.get("GOOGLE_CREDENTIALS_JSON")
 if not google_creds:
     raise Exception("❌ GOOGLE_CREDENTIALS_JSON secret not set.")
-creds_dict = json.loads(google_creds)
 
-# === Load Seats.io API Key from Secret ===
-seatsio_api_key = os.environ.get("SEATSIO_API_KEY")
-if not seatsio_api_key:
+creds_dict = json.loads(google_creds)
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+client = gspread.authorize(credentials)
+
+# === Open Google Sheet ===
+spreadsheet_id = "1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ"
+sheet_name = "Grand Theatre Seating Plan"
+sheet = client.open_by_key(spreadsheet_id).worksheet(sheet_name)
+rows = sheet.get_all_records()
+
+# === Seats.io setup ===
+api_key = os.environ.get("SEATSIO_API_KEY")
+if not api_key:
     raise Exception("❌ SEATSIO_API_KEY secret not set.")
 
-# === Chart Key (Your chart) ===
-chart_key = "49e1934d-4a13-e089-8344-8d01ace4e8db"
-
-# === Google Sheets Setup ===
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-client = gspread.authorize(creds)
-
-# === Open your sheet ===
-spreadsheet_id = "1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ"
-sheet = client.open_by_key(spreadsheet_id).worksheet("Grand Theatre Seating Plan")
-data = sheet.get_all_records()
-
-# === Seats.io Setup ===
-base_url = "https://api.seats.io"
 headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Secret {seatsio_api_key}"
+    "Authorization": f"Secret {api_key}",
+    "Content-Type": "application/json"
 }
 
-# === Create draft version to edit ===
-r = requests.post(f"{base_url}/charts/{chart_key}/version/draft", headers=headers)
-if r.status_code != 200:
-    raise Exception(f"❌ Failed to create draft version: {r.status_code} - {r.text}")
+chart_key = "49e1934d-4a13-e089-8344-8d01ace4e8db"
+base_url = "https://api.seats.io"
 
-# === Upload each seat ===
-for row in data:
+# === Clear the chart first ===
+print("🧹 Clearing chart before adding new seats...")
+requests.post(f"{base_url}/charts/{chart_key}/actions/clear", headers=headers)
+
+# === Add each seat ===
+for row in rows:
     label = row["Seat Label"]
     x = float(row["X"])
     y = float(row["Y"])
@@ -51,25 +46,17 @@ for row in data:
 
     payload = {
         "label": label,
-        "x": x,
-        "y": y,
+        "coordinates": {"x": x, "y": y},
         "category": category
     }
 
-    res = requests.post(
-        f"{base_url}/charts/{chart_key}/version/draft/seats",
+    r = requests.post(
+        f"{base_url}/charts/{chart_key}/drawing/seats",
         headers=headers,
         json=payload
     )
 
-    if res.status_code == 201:
+    if r.status_code == 201:
         print(f"✅ Seat {label} created.")
     else:
-        print(f"❌ Failed to create seat {label}: {res.status_code} - {res.text}")
-
-# === Publish the draft ===
-res = requests.post(f"{base_url}/charts/{chart_key}/version/publish", headers=headers)
-if res.status_code == 204:
-    print("✅ Chart published successfully.")
-else:
-    print(f"❌ Failed to publish chart: {res.status_code} - {res.text}")
+        print(f"❌ Failed to create seat {label}: {r.status_code} - {r.text}")
