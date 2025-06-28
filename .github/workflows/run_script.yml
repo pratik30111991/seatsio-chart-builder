@@ -19,5 +19,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # ✅ Add this step to expose GitHub Secrets
+      - name: Export secrets to env
+        run: |
+          echo "GOOGLE_CREDENTIALS_JSON=${{ secrets.GOOGLE_CREDENTIALS_JSON }}" >> $GITHUB_ENV
+          echo "SEATSIO_API_KEY=${{ secrets.SEATSIO_API_KEY }}" >> $GITHUB_ENV
+
       - name: Run main script
         run: python main.py
