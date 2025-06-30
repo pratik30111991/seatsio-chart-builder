@@ -1,10 +1,10 @@
-name: Seats Chart Builder
+name: Auto Create Seats.io Chart
 
 on:
   workflow_dispatch:
 
 jobs:
-  run-script:
+  run:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -15,15 +15,14 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
-          pip install gspread oauth2client seatsio
+          pip install gspread oauth2client seatsio==44.0.0
 
-      - name: Create Google credentials
-        run: |
-          echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
+      - name: Create Google credentials file
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
 
-      - name: Run script
+      - name: Run main script
         env:
           SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
           SEATSIO_WORKSPACE_KEY: ${{ secrets.SEATSIO_WORKSPACE_KEY }}
