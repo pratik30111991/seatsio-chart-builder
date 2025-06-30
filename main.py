@@ -5,7 +5,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 from seatsio.seatsio_client import SeatsioClient
 from seatsio.region import Region
 
-
 # Load secrets
 SEATSIO_API_KEY = os.environ.get("SEATSIO_API_KEY")
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
