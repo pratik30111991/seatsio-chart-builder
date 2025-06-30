@@ -1,4 +1,4 @@
 gspread
 oauth2client
 requests
-git+https://github.com/seatsio/seatsio-python.git
+git+https://github.com/seatsio/seatsio-python.git@v46.0.0
