@@ -2,7 +2,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 from seatsio import Client
-from seatsio.region import Region  # ✅ THIS IS IMPORTANT
+from seatsio.region import Region
 
 SEATSIO_SECRET_KEY = os.environ["SEATSIO_SECRET_KEY"]
 CHART_KEY = os.environ["SEATSIO_CHART_KEY"]
@@ -14,10 +14,10 @@ gc = gspread.authorize(creds)
 sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
-# ✅ FIXED region import + method call
 client = Client(secret_key=SEATSIO_SECRET_KEY, region=Region.NA())
 
-client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
+# ✅ REMOVE .update() — not available in old SDK
+# client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
 
 for row in rows:
     client.charts.create_object(
@@ -29,4 +29,4 @@ for row in rows:
         top=float(row["Y"])
     )
 
-print("✅ Chart updated with all seats.")
+print("✅ All seats added successfully.")
