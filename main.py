@@ -13,7 +13,6 @@ gc = gspread.authorize(creds)
 sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
-# ✅ Use correct North America region enum
 client = Client(secret_key=SEATSIO_SECRET_KEY, region=Region.NA)
 
 client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
