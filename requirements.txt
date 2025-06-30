@@ -1,4 +1,3 @@
 gspread
 oauth2client
 requests
-seatsio==47.0.0
