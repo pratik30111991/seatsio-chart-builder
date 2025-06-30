@@ -2,7 +2,8 @@ import os
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from seatsio import SeatsioClient, Region
+from seatsio.client import SeatsioClient
+from seatsio.region import Region
 
 # === Config ===
 SEATSIO_API_KEY = os.environ["SEATSIO_API_KEY"]
