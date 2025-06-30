@@ -1,12 +1,13 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
-from seatsio import Client
+from seatsio import Client, Region
 
+# Load secrets
 SEATSIO_SECRET_KEY = os.environ["SEATSIO_SECRET_KEY"]
 CHART_KEY = os.environ["SEATSIO_CHART_KEY"]
 
-# Google Sheets
+# Connect to Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("google_credentials.json", scope)
 gc = gspread.authorize(creds)
@@ -14,12 +15,13 @@ gc = gspread.authorize(creds)
 sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
-# ✅ CORRECT Client usage using region string
-client = Client(secret_key=SEATSIO_SECRET_KEY, region="na")
+# ✅ CORRECT region usage (North America region = Region.NA)
+client = Client(secret_key=SEATSIO_SECRET_KEY, region=Region.NA)
 
-# Update chart and add seats
+# Update chart name
 client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
 
+# Create seats
 for row in rows:
     client.charts.create_object(
         chart_key=CHART_KEY,
