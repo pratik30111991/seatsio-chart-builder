@@ -17,6 +17,7 @@ rows = sheet.get_all_records()
 client = Client(secret_key=SEATSIO_SECRET_KEY, region=Region.NA())
 
 # ✅ REMOVE .update() — not available in old SDK
+# client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
 
 for row in rows:
     client.charts.create_object(
