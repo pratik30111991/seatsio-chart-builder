@@ -3,11 +3,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 import os
 from seatsio import SeatsioClient, Region
 
-# ENV VARIABLES
 SEATSIO_SECRET_KEY = os.environ["SEATSIO_SECRET_KEY"]
 CHART_KEY = os.environ["SEATSIO_CHART_KEY"]
 
-# Connect to Google Sheet
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("google_credentials.json", scope)
 client = gspread.authorize(creds)
@@ -15,10 +13,8 @@ client = gspread.authorize(creds)
 sheet = client.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
-# Connect to Seats.io
 client = SeatsioClient(Region.IN, SEATSIO_SECRET_KEY)
 
-# Clean chart and add new objects
 client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
 
 for row in rows:
@@ -37,4 +33,4 @@ for row in rows:
         top=y
     )
 
-print("✅ All seats added to chart.")
+print("✅ All seats added successfully.")
