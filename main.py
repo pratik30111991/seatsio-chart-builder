@@ -1,36 +1,28 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
-from seatsio import SeatsioClient, Region
+from seatsio.client import SeatsioClient
+from seatsio.region import Region
 
-# Google Sheet setup
-SHEET_ID = "1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ"
-SHEET_NAME = "Grand Theatre Seating Plan"
-
-# Seats.io credentials from GitHub Secrets
+# ENV VARIABLES
 SEATSIO_SECRET_KEY = os.environ["SEATSIO_SECRET_KEY"]
-SEATSIO_WORKSPACE_KEY = os.environ["SEATSIO_WORKSPACE_KEY"]
-SEATSIO_CHART_KEY = os.environ["SEATSIO_CHART_KEY"]
+CHART_KEY = os.environ["SEATSIO_CHART_KEY"]
 
-# Load Google credentials
-creds = ServiceAccountCredentials.from_json_keyfile_name("google_credentials.json", [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive"
-])
+# Connect to Google Sheet
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("google_credentials.json", scope)
 client = gspread.authorize(creds)
 
-sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+sheet = client.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
+# Connect to Seats.io
 client = SeatsioClient(Region.IN, SEATSIO_SECRET_KEY)
 
-# Create new chart
-chart = client.charts.update(SEATSIO_CHART_KEY, name="Updated Grand Theatre Chart")
+# Clean chart and add new objects
+client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
 
-# Clear existing seats
-client.charts.remove_custom_objects(SEATSIO_CHART_KEY)
-
-# Add new seats
+# Add seats
 for row in rows:
     seat_id = row["Seat"]
     label = row["Label"]
@@ -39,7 +31,7 @@ for row in rows:
     category = int(row["Category"])
 
     client.charts.create_object(
-        chart_key=SEATSIO_CHART_KEY,
+        chart_key=CHART_KEY,
         object_type="seat",
         label=label,
         category_key=str(category),
@@ -47,4 +39,4 @@ for row in rows:
         top=y
     )
 
-print("✅ Seats chart updated successfully.")
+print("✅ All seats successfully added to chart.")
