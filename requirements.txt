@@ -1,4 +1,4 @@
 gspread
 oauth2client
 requests
-seatsio
+seatsio-client==46.0.0
