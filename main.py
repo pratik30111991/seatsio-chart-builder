@@ -1,10 +1,10 @@
 import os
 import json
-import requests
 import gspread
+import requests
 from oauth2client.service_account import ServiceAccountCredentials
 
-# --- Config ---
+# === Config ===
 SEATSIO_API_KEY = os.environ["SEATSIO_API_KEY"]
 GOOGLE_CREDENTIALS_JSON = os.environ["GOOGLE_CREDENTIALS_JSON"]
 SHEET_ID = "1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ"
@@ -12,21 +12,25 @@ SHEET_NAME = "Grand Theatre Seating Plan"
 CHART_KEY = "49e1934d-4a13-e089-8344-8d01ace4e8db"
 BASE_URL = "https://api.seats.io"
 
-# --- Google Sheets ---
-creds = ServiceAccountCredentials.from_json_keyfile_dict(
-    json.loads(GOOGLE_CREDENTIALS_JSON),
-    ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-)
+# === Google Sheets ===
+creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
-rows = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME).get_all_records()
+sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+rows = sheet.get_all_records()
 
-# --- Create draft ---
-draft_url = f"{BASE_URL}/charts/{CHART_KEY}/version/draft"
-resp = requests.post(draft_url, auth=(SEATSIO_API_KEY, ""))
-resp.raise_for_status()
+# === Create Draft ===
+print("🧪 Creating draft version...")
+res = requests.post(f"{BASE_URL}/charts/{CHART_KEY}/version/draft", auth=(SEATSIO_API_KEY, ""))
+if res.status_code != 200:
+    raise Exception(f"❌ Error creating draft: {res.text}")
+print("✅ Draft version created.")
 
-# --- Add seats via REST endpoint ---
+# === Add Seats ===
+print("🎯 Adding seats to chart...")
 add_url = f"{BASE_URL}/charts/{CHART_KEY}/version/draft/actions/add-seats"
+
 for row in rows:
     seat = {
         "label": row["Seat Label"],
@@ -34,14 +38,19 @@ for row in rows:
         "y": float(row["Y"]),
         "category": row["Category"]
     }
+
     body = {"seats": [seat]}
-    r = requests.post(add_url, json=body, auth=(SEATSIO_API_KEY, ""))
-    if r.status_code != 200:
-        print("❌", seat, r.status_code, r.text)
+    r = requests.post(add_url, auth=(SEATSIO_API_KEY, ""), json=body)
 
-# --- Publish draft ---
-pub = f"{BASE_URL}/charts/{CHART_KEY}/version/draft/publish"
-rp = requests.post(pub, auth=(SEATSIO_API_KEY, ""))
-rp.raise_for_status()
+    if r.status_code == 200:
+        print(f"✅ Seat {seat['label']} added.")
+    else:
+        print(f"❌ Failed to add seat {seat['label']}: {r.status_code} - {r.text}")
 
-print("✅ All seats uploaded and draft published.")
+# === Publish Draft ===
+print("🚀 Publishing draft...")
+pub = requests.post(f"{BASE_URL}/charts/{CHART_KEY}/version/draft/publish", auth=(SEATSIO_API_KEY, ""))
+if pub.status_code == 200:
+    print("✅ Chart published successfully.")
+else:
+    raise Exception(f"❌ Failed to publish draft: {pub.text}")
