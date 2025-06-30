@@ -1,22 +1,31 @@
-name: Upload Seats to Seats.io
+name: Seats Chart Builder
 
 on:
   workflow_dispatch:
 
 jobs:
-  upload:
+  run-script:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: pip install --upgrade pip && pip install -r requirements.txt
+        run: |
+          pip install gspread oauth2client seatsio
+
+      - name: Create Google credentials
+        run: |
+          echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
 
       - name: Run script
         env:
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          SEATSIO_API_KEY: ${{ secrets.SEATSIO_API_KEY }}
+          SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
+          SEATSIO_WORKSPACE_KEY: ${{ secrets.SEATSIO_WORKSPACE_KEY }}
+          SEATSIO_CHART_KEY: ${{ secrets.SEATSIO_CHART_KEY }}
         run: python main.py
