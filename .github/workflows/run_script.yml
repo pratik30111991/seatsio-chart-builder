@@ -17,8 +17,9 @@ jobs:
 
       - name: Clean up old seatsio
         run: |
-          pip uninstall -y seatsio || true
-          rm -rf ~/.cache/pip
+            pip uninstall -y seatsio || true
+              rm -rf ~/.cache/pip
+
 
       - name: Install dependencies
         run: pip install -r requirements.txt
