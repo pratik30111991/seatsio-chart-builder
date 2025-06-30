@@ -1,8 +1,7 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
-from seatsio.client import SeatsioClient
-from seatsio.region import Region
+from seatsio import SeatsioClient, Region
 
 # ENV VARIABLES
 SEATSIO_SECRET_KEY = os.environ["SEATSIO_SECRET_KEY"]
@@ -22,7 +21,6 @@ client = SeatsioClient(Region.IN, SEATSIO_SECRET_KEY)
 # Clean chart and add new objects
 client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
 
-# Add seats
 for row in rows:
     seat_id = row["Seat"]
     label = row["Label"]
@@ -39,4 +37,4 @@ for row in rows:
         top=y
     )
 
-print("✅ All seats successfully added to chart.")
+print("✅ All seats added to chart.")
