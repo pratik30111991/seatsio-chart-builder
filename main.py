@@ -1,57 +1,44 @@
 import os
 import json
 import gspread
-import requests
 from oauth2client.service_account import ServiceAccountCredentials
+from seatsio import SeatsioClient, Region
 
-# Env vars
-SEATSIO_API_KEY = os.environ["SEATSIO_API_KEY"]
-GOOGLE_CREDENTIALS_JSON = os.environ["GOOGLE_CREDENTIALS_JSON"]
+# Read env vars
+SEATSIO_API_KEY = os.environ.get("SEATSIO_API_KEY")
+GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
 SHEET_ID = "1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ"
 SHEET_NAME = "Grand Theatre Seating Plan"
 
-# Google Sheets access
+if not SEATSIO_API_KEY or not GOOGLE_CREDENTIALS_JSON:
+    raise Exception("Missing API key or Google credentials!")
+
+# Authorize Sheets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
-creds = ServiceAccountCredentials.from_json_keyfile_dict(
-    creds_dict,
-    ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-)
-sheets = gspread.authorize(creds)
-rows = sheets.open_by_key(SHEET_ID).worksheet(SHEET_NAME).get_all_records()
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+gc = gspread.authorize(creds)
+worksheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+rows = worksheet.get_all_records()
 
-# API base
-BASE = "https://api-seatsio.seats.io"
+# Create chart in Seats.io
+client = SeatsioClient(Region.IN, SEATSIO_API_KEY)
+chart = client.charts.create("🎭 Grand Theatre Chart (Auto)")
+client.charts.create_draft_version(chart.key)
+print(f"✅ Chart created with key: {chart.key}")
 
-# 1. Create chart
-res_chart = requests.post(f"{BASE}/charts", auth=(SEATSIO_API_KEY, ""))
-res_chart.raise_for_status()
-chart_key = res_chart.json()["key"]
-print("✅ Chart created:", chart_key)
-
-# 2. Create draft
-res_draft = requests.post(f"{BASE}/charts/{chart_key}/version/draft", auth=(SEATSIO_API_KEY, ""))
-res_draft.raise_for_status()
-print("🧪 Draft created")
-
-# 3. Upload seats
+# Add seats
 for row in rows:
-    payload = {
-        "label": row["Seat Label"],
-        "x": float(row["X"]),
-        "y": float(row["Y"]),
-        "category": row["Category"]
-    }
-    r = requests.post(
-        f"{BASE}/charts/{chart_key}/version/draft/actions/add-seat",
-        json=payload,
-        auth=(SEATSIO_API_KEY, "")
-    )
-    if r.status_code != 200:
-        print("❌ Seat add failed:", r.text)
+    try:
+        label = row["Seat"]
+        x = float(row["X"])
+        y = float(row["Y"])
+        category = row["Category"]
+        client.charts.add_seat_to_draft_version(chart.key, x, y, label, category)
+        print(f"🪑 Added: {label} at ({x},{y}) [Category: {category}]")
+    except Exception as e:
+        print(f"⚠️ Error for seat {row.get('Seat', '')}: {e}")
 
-print("🪚 Seats uploaded")
-
-# 4. Publish draft
-rp = requests.post(f"{BASE}/charts/{chart_key}/version/draft/publish", auth=(SEATSIO_API_KEY, ""))
-rp.raise_for_status()
-print("🎉 Draft published — chart ready!")
+# Publish
+client.charts.publish_draft_version(chart.key)
+print("🎉 Draft version published!")
