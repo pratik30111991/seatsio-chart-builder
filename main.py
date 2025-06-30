@@ -7,18 +7,19 @@ from seatsio.region import Region
 SEATSIO_SECRET_KEY = os.environ["SEATSIO_SECRET_KEY"]
 CHART_KEY = os.environ["SEATSIO_CHART_KEY"]
 
+# Authenticate Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("google_credentials.json", scope)
 gc = gspread.authorize(creds)
 
+# Read data from Google Sheet
 sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
+# Initialize Seats.io client (with working region)
 client = Client(secret_key=SEATSIO_SECRET_KEY, region=Region.NA())
 
-# ✅ REMOVE .update() — not available in old SDK
-# client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
-
+# Add seats to the chart
 for row in rows:
     client.charts.create_object(
         chart_key=CHART_KEY,
@@ -29,4 +30,4 @@ for row in rows:
         top=float(row["Y"])
     )
 
-print("✅ All seats added successfully.")
+print("✅ All seats placed successfully.")
