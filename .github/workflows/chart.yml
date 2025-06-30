@@ -19,7 +19,7 @@ jobs:
           pip uninstall -y seatsio || true
           rm -rf ~/.cache/pip
           pip install --upgrade pip
-          pip install gspread oauth2client seatsio==75.0.0
+          pip install seatsio==81.8.0
 
       - name: Create credentials file
         run: echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
