@@ -7,30 +7,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Uninstall broken seatsio (if exists) 🔥
+      - name: Remove old package/install fresh
         run: |
           pip uninstall -y seatsio || true
           rm -rf ~/.cache/pip
-
-      - name: Install dependencies (force correct version) ✅
-        run: |
           pip install --upgrade pip
-          pip install gspread oauth2client seatsio==44.0.0
+          pip install gspread oauth2client seatsio==81.8.0  # latest SDK version as per PyPI
 
-      - name: Create Google credentials file
+      - name: Create credentials file
         run: echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
 
       - name: Run script
         env:
           SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
-          SEATSIO_WORKSPACE_KEY: ${{ secrets.SEATSIO_WORKSPACE_KEY }}
           SEATSIO_CHART_KEY: ${{ secrets.SEATSIO_CHART_KEY }}
         run: python main.py
