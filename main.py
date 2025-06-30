@@ -1,36 +1,36 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
-from seatsio import SeatsioClient, Region
+import seatsio  # use seatsio.Client per SDK docs
+from seatsio import Region
 
+# Load secrets
 SEATSIO_SECRET_KEY = os.environ["SEATSIO_SECRET_KEY"]
 CHART_KEY = os.environ["SEATSIO_CHART_KEY"]
 
+# Google Sheets connection
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("google_credentials.json", scope)
-client = gspread.authorize(creds)
+gc = gspread.authorize(creds)
 
-sheet = client.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
+sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
-client = SeatsioClient(Region.IN, SEATSIO_SECRET_KEY)
+# Seats.io client
+client = seatsio.Client(Region.IN(), secret_key=SEATSIO_SECRET_KEY)
 
+# Update chart name
 client.charts.update(CHART_KEY, name="Grand Theatre - Auto Updated")
 
+# Add seats
 for row in rows:
-    seat_id = row["Seat"]
-    label = row["Label"]
-    x = float(row["X"])
-    y = float(row["Y"])
-    category = int(row["Category"])
-
     client.charts.create_object(
         chart_key=CHART_KEY,
         object_type="seat",
-        label=label,
-        category_key=str(category),
-        left=x,
-        top=y
+        label=row["Label"],
+        category_key=str(int(row["Category"])),
+        left=float(row["X"]),
+        top=float(row["Y"])
     )
 
 print("✅ All seats added successfully.")
