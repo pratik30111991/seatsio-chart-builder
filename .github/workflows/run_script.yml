@@ -16,16 +16,15 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: 🧹 Clean broken package (seatsio)
+      - name: Clean broken cache (seatsio)
         run: |
           pip uninstall -y seatsio || true
+          rm -rf ~/.cache/pip || true
           rm -rf /opt/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/seatsio
-          pip cache purge || true
+          pip install --no-cache-dir --upgrade pip
+          pip install --no-cache-dir -r requirements.txt
 
-      - name: Install correct packages
-        run: pip install --upgrade pip && pip install -r requirements.txt
-
-      - name: Run main script
+      - name: Run main.py
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
           SEATSIO_API_KEY: ${{ secrets.SEATSIO_API_KEY }}
