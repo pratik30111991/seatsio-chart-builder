@@ -18,7 +18,7 @@ sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet
 rows = sheet.get_all_records()
 
 # Connect to Seats.io
-client = SeatsioClient(region=Region.NORTH_AMERICA(), secret_key=os.environ["SEATSIO_SECRET_KEY"])
+client = SeatsioClient(Region.NORTH_AMERICA(), secret_key=os.environ["SEATSIO_SECRET_KEY"])
 chart = client.charts.create(name="Grand Theatre Chart")
 print("✅ Chart created:", chart.key)
 
