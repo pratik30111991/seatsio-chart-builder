@@ -22,6 +22,9 @@ jobs:
         run: |
           pip install gspread oauth2client seatsio==81.8.0
 
+      - name: Write Google credentials to file
+        run: |
+          echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
+
       - name: Run chart builder
-        working-directory: ${{ github.workspace }}
         run: python main.py
