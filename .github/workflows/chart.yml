@@ -22,5 +22,4 @@ jobs:
         run: python main.py
         env:
           SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
-          SEATSIO_CHART_KEY: ${{ secrets.SEATSIO_CHART_KEY }}
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
