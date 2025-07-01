@@ -2,33 +2,34 @@ import os
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from seatsio import Client
+from seatsio import Client, Region
 
-# Load Google credentials from environment
-json_str = os.environ["GOOGLE_CREDENTIALS_JSON"]
-json_data = json.loads(json_str)
+# Read environment variables
+SEATSIO_SECRET_KEY = os.environ["SEATSIO_SECRET_KEY"]
+GOOGLE_CREDENTIALS_JSON = os.environ["GOOGLE_CREDENTIALS_JSON"]
 
-# Authenticate Google Sheets
+# Convert escaped JSON string into dict
+creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
+
+# Setup Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(json_data, scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 gc = gspread.authorize(creds)
 
-# Access Google Sheet
+# Open the correct sheet
 sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
-rows = sheet.get_all_records()
+data = sheet.get_all_records()
 
-# Authenticate Seats.io
-client = Client(secret_key=os.environ["SEATSIO_SECRET_KEY"], region="eu")
-
-# Create chart
+# Create chart in NA region
+client = Client(secret_key=SEATSIO_SECRET_KEY, region=Region.NORTH_AMERICA())
 chart = client.charts.create("Grand Theatre - Automated Chart")
 
-# Create seats
-for row in rows:
-    label = str(row["Label"])
+# Add all seats
+for row in data:
+    label = row["Label"]
     x = float(row["X"])
     y = float(row["Y"])
-    category = row["Category"]
-    client.charts.add_seat_to_chart(chart.key, label=label, x=x, y=y, category=category)
+    category = int(row["Category"])
+    client.charts.add_seat(chart.key, label=label, x=x, y=y, category=category)
 
-print(f"✅ Chart created: {chart.key}")
+print("✅ Seats imported successfully to chart:", chart.key)
