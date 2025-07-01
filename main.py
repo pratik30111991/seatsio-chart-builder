@@ -2,7 +2,7 @@ import os
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from seatsio.client import SeatsioClient, Region
+from seatsio import SeatsioClient, Region
 
 # Load credentials from GitHub secret
 creds_json = os.environ["GOOGLE_CREDENTIALS_JSON"]
@@ -18,7 +18,7 @@ sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet
 rows = sheet.get_all_records()
 
 # Connect to Seats.io
-client = SeatsioClient(Region.NORTH_AMERICA(), secret_key=os.environ["SEATSIO_SECRET_KEY"])
+client = SeatsioClient(region=Region.NORTH_AMERICA(), secret_key=os.environ["SEATSIO_SECRET_KEY"])
 chart = client.charts.create(name="Grand Theatre Chart")
 print("✅ Chart created:", chart.key)
 
@@ -31,7 +31,7 @@ for cat in categories:
 
 # Add seats
 for row in rows:
-    label = row["Seat Label"]
+    label = row["Label"]
     x = float(row["X"])
     y = float(row["Y"])
     category_label = row["Category"]
