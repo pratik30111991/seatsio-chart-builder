@@ -1,33 +1,26 @@
-name: Seats.io Chart Builder
+name: Build Seats.io Chart
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'main.py'
-      - '.github/workflows/chart.yml'
 
 jobs:
-  build:
+  run-script:
     runs-on: ubuntu-latest
-
-    env:
-      SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
-      SEATSIO_CHART_KEY: ${{ secrets.SEATSIO_CHART_KEY }}
-      GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      - name: Run main script
+      - name: Run script
         run: python main.py
+        env:
+          SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
+          SEATSIO_CHART_KEY: ${{ secrets.SEATSIO_CHART_KEY }}
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
