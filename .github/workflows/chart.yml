@@ -1,14 +1,20 @@
-name: Build Seats.io Chart
+name: Seats.io Chart Builder
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'main.py'
+      - '.github/workflows/chart.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     env:
       SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
       SEATSIO_CHART_KEY: ${{ secrets.SEATSIO_CHART_KEY }}
+      GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
 
     steps:
       - uses: actions/checkout@v3
@@ -20,11 +26,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install gspread oauth2client seatsio==81.8.0
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Write Google credentials to file
-        run: |
-          echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
-
-      - name: Run chart builder
+      - name: Run main script
         run: python main.py
