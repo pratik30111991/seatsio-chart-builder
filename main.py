@@ -2,27 +2,27 @@ import os
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from seatsio import SeatsioClient, Region
+from seatsio.client import SeatsioClient, Region
 
-# Load Google credentials from GitHub secret
+# Load credentials from GitHub secret
 creds_json = os.environ["GOOGLE_CREDENTIALS_JSON"]
 creds_dict = json.loads(creds_json)
 
-# Authorize Google Sheets
+# Google Sheets authorization
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 gc = gspread.authorize(credentials)
 
-# Open the sheet
+# Open sheet
 sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
-# Create Seats.io chart in NA region
+# Connect to Seats.io
 client = SeatsioClient(Region.NORTH_AMERICA(), secret_key=os.environ["SEATSIO_SECRET_KEY"])
 chart = client.charts.create(name="Grand Theatre Chart")
 print("✅ Chart created:", chart.key)
 
-# Fetch all categories used
+# Collect unique categories
 categories = list(set(row["Category"] for row in rows))
 category_map = {}
 for cat in categories:
