@@ -6,6 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
+      SEATSIO_CHART_KEY: ${{ secrets.SEATSIO_CHART_KEY }}
 
     steps:
       - uses: actions/checkout@v3
