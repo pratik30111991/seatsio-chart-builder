@@ -23,4 +23,5 @@ jobs:
           pip install gspread oauth2client seatsio==81.8.0
 
       - name: Run chart builder
+        working-directory: ${{ github.workspace }}
         run: python main.py
