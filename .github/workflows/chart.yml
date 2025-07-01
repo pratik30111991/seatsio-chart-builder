@@ -1,10 +1,10 @@
-name: Build Seats.io Chart
+name: Upload Seats to Seats.io
 
 on:
   workflow_dispatch:
 
 jobs:
-  run-script:
+  upload:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -13,13 +13,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: 3.10
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
       - name: Run script
-        run: python main.py
         env:
           SEATSIO_SECRET_KEY: ${{ secrets.SEATSIO_SECRET_KEY }}
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: python main.py
