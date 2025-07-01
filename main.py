@@ -2,33 +2,40 @@ import os
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from seatsio import Client, Region
+from seatsio import SeatsioClient, Region
 
-# ✅ Load credentials from environment
+# Load Google credentials from GitHub secret
 creds_json = os.environ["GOOGLE_CREDENTIALS_JSON"]
 creds_dict = json.loads(creds_json)
 
-# ✅ Google Sheets setup
+# Authorize Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 gc = gspread.authorize(credentials)
 
-# ✅ Open Google Sheet
+# Open the sheet
 sheet = gc.open_by_key("1Y0HEFyBeIYTUaJvBwRw3zw-cjjULujnU5EfguohoGvQ").worksheet("Grand Theatre Seating Plan")
 rows = sheet.get_all_records()
 
-# ✅ Seats.io client with correct region
-client = Client(secret_key=os.environ["SEATSIO_SECRET_KEY"], region=Region.NORTH_AMERICA())
-
-# ✅ Create chart
+# Create Seats.io chart in NA region
+client = SeatsioClient(Region.NORTH_AMERICA(), secret_key=os.environ["SEATSIO_SECRET_KEY"])
 chart = client.charts.create(name="Grand Theatre Chart")
+print("✅ Chart created:", chart.key)
 
-# ✅ Add seats
+# Fetch all categories used
+categories = list(set(row["Category"] for row in rows))
+category_map = {}
+for cat in categories:
+    created = client.charts.create_category(chart.key, label=cat, color="#009688")
+    category_map[cat] = created.key
+
+# Add seats
 for row in rows:
     label = row["Seat Label"]
     x = float(row["X"])
     y = float(row["Y"])
-    category = row["Category"]
-    client.charts.add_seat(chart.key, label=label, x=x, y=y, category=category)
+    category_label = row["Category"]
+    category_key = category_map[category_label]
+    client.charts.add_seat(chart.key, label=label, x=x, y=y, category_key=category_key)
 
-print("✅ Chart created successfully:", chart.key)
+print("🎉 All seats added successfully!")
