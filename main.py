@@ -2,7 +2,8 @@ import os
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from seatsio import SeatsioClient, Region
+from seatsio.client import SeatsioClient, Region
+
 
 # Read Google credentials from secret
 json_str = os.environ["GOOGLE_CREDENTIALS_JSON"]
