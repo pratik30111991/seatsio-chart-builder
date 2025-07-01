@@ -1,13 +1,16 @@
 import os
 import json
+import codecs
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from seatsio import Client, Region
 
-# === Step 1: Load Google Credentials from GitHub Secrets ===
+# 🔧 Load escaped secret from GitHub, decode and parse
 creds_json = os.environ["GOOGLE_CREDENTIALS_JSON"]
+creds_json = codecs.decode(creds_json, 'unicode_escape')
 creds_dict = json.loads(creds_json)
 
+# ✅ Google Sheets auth
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 gc = gspread.authorize(credentials)
